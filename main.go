@@ -14,7 +14,13 @@ type game struct {
 	score      int
 }
 
-func getGame() *game {
+var (
+	score int
+	wg    sync.WaitGroup
+)
+
+// GetGame returns a game that can be *game.Play()'ed
+func GetGame() *game {
 	return &game{
 		categories: map[int]int{
 			1: 0,
@@ -52,7 +58,8 @@ func (g *game) pickCategory(diceroll []int) int {
 	return highestScoreCat
 }
 
-func (g *game) play() int {
+//Play plays a round of yatzy
+func (g *game) Play() int {
 	for i := 0; i < len(g.categories); i++ {
 		diceKept := 0
 		chosenCategory := 0
@@ -83,22 +90,20 @@ func (g *game) tallyScore() {
 	}
 }
 
-var score int
-var wg sync.WaitGroup
-
 func playMany() {
 	wg.Add(1)
-	g := getGame()
-	score += g.play()
+	g := GetGame()
+	score += g.Play()
 	wg.Done()
 }
 
 func main() {
-	for i := 0; i < 100; i++ {
+	numGames := 100
+	for i := 0; i < numGames; i++ {
 		go playMany()
 	}
 	wg.Wait()
-	fmt.Println("Average score is: ", score/100)
+	fmt.Println("Average score of", numGames, "games is: ", score/numGames)
 }
 
 func rollDice(n int) ([]int, error) {
